@@ -1,23 +1,31 @@
-FROM ubuntu:trusty
-MAINTAINER Fernando Mayo <fernando@tutum.co>
+FROM rabbitmq:3.7
+MAINTAINER Mauricio S Otta <mauricio@portnumber53.com>
 
-# Install RabbitMQ
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F7B8CEA6056E8E56 && \
-    echo "deb http://www.rabbitmq.com/debian/ testing main" >> /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y rabbitmq-server pwgen && \
-    rabbitmq-plugins enable rabbitmq_management && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN rabbitmq-plugins enable --offline rabbitmq_management
+RUN rabbitmq-plugins enable --offline rabbitmq_amqp1_0
 
-RUN echo "ERLANGCOOKIE" > /var/lib/rabbitmq/.erlang.cookie
-RUN chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
-RUN chmod 400 /var/lib/rabbitmq/.erlang.cookie
+# extract "rabbitmqadmin" from inside the "rabbitmq_management-X.Y.Z.ez" plugin zipfile
+# see https://github.com/docker-library/rabbitmq/issues/207
+RUN set -eux; \
+	erl -noinput -eval ' \
+		{ ok, AdminBin } = zip:foldl(fun(FileInArchive, GetInfo, GetBin, Acc) -> \
+			case Acc of \
+				"" -> \
+					case lists:suffix("/rabbitmqadmin", FileInArchive) of \
+						true -> GetBin(); \
+						false -> Acc \
+					end; \
+				_ -> Acc \
+			end \
+		end, "", init:get_plain_arguments()), \
+		io:format("~s", [ AdminBin ]), \
+		init:stop(). \
+	' -- /plugins/rabbitmq_management-*.ez > /usr/local/bin/rabbitmqadmin; \
+	[ -s /usr/local/bin/rabbitmqadmin ]; \
+	chmod +x /usr/local/bin/rabbitmqadmin; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends python; \
+	rm -rf /var/lib/apt/lists/*; \
+	rabbitmqadmin --version
 
-# Add scripts
-ADD run.sh /run.sh
-ADD set_rabbitmq_password.sh /set_rabbitmq_password.sh
-RUN chmod 755 ./*.sh
-
-EXPOSE 5672 15672
-CMD ["/run.sh"]
+EXPOSE 15671 15672

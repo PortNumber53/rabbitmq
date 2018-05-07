@@ -1,7 +1,5 @@
-tutum-docker-rabbitmq
+Rabbit-MQ
 =====================
-
-[![Deploy to Tutum](https://s.tutum.co/deploy-to-tutum.svg)](https://dashboard.tutum.co/stack/deploy/)
 
 Base docker image to run a RabbitMQ server
 
@@ -9,9 +7,9 @@ Base docker image to run a RabbitMQ server
 Usage
 -----
 
-To create the image `tutum/rabbitmq`, execute the following command on the tutum-rabbitmq folder:
+To create the image `portnumber53/rabbitmq`, execute the following command on the portnumber53-rabbitmq folder:
 
-	sudo docker build -t tutum/rabbitmq .
+	sudo docker build -t portnumber53/rabbitmq .
 
 
 Running the RabbitMQ server
@@ -19,7 +17,7 @@ Running the RabbitMQ server
 
 Run the following command to start rabbitmq:
 
-	docker run -d -p 5672:5672 -p 15672:15672 tutum/rabbitmq
+	docker run -d portnumber53/rabbitmq
 
 The first time that you run your container, a new random password will be set.
 To get the password, check the logs of the container by running:
